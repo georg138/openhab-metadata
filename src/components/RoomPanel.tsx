@@ -124,7 +124,7 @@ function LightLeaf({ item, depth, onRefresh }: { item: LightItem; depth: number;
   )
 }
 
-// ── Tree group (equipment node, always expanded showing children) ──────────────
+// ── Tree group (equipment node, collapsible) ──────────────────────────────────
 
 function TreeGroup({ name, label, hasMeta, depth, form, children }: {
   name: string
@@ -134,38 +134,48 @@ function TreeGroup({ name, label, hasMeta, depth, form, children }: {
   form: React.ReactNode
   children: React.ReactNode
 }) {
+  const [expanded, setExpanded] = useState(false)
   const [formOpen, setFormOpen] = useState(false)
   const indent = depth * 16
 
   return (
     <div style={{ marginLeft: indent }} className="space-y-2">
       <div className="border border-purple-200 rounded-lg overflow-hidden">
-        <button
-          className="w-full flex items-center justify-between px-4 py-2.5 text-left bg-purple-50 hover:bg-purple-100 transition-colors"
-          onClick={() => setFormOpen((v) => !v)}
-        >
-          <div className="flex items-center gap-2">
+        <div className="flex items-center bg-purple-50">
+          {/* Expand/collapse children toggle */}
+          <button
+            className="flex items-center gap-2 flex-1 px-4 py-2.5 text-left hover:bg-purple-100 transition-colors"
+            onClick={() => setExpanded((v) => !v)}
+          >
+            <span className="text-gray-400 text-xs w-3">{expanded ? '▾' : '▸'}</span>
             <span className="text-purple-400 text-xs">⚙</span>
             <span className="font-medium text-sm text-gray-900">{label}</span>
             {hasMeta
               ? <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">configured</span>
               : <span className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">no metadata</span>
             }
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-400 font-mono hidden sm:block">{name}</span>
-            <span className="text-gray-400">{formOpen ? '▾' : '▸'}</span>
-          </div>
-        </button>
+          </button>
+          {/* Edit metadata button */}
+          <button
+            className="px-3 py-2.5 text-xs text-purple-500 hover:text-purple-700 hover:bg-purple-100 transition-colors border-l border-purple-200 font-mono"
+            onClick={() => setFormOpen((v) => !v)}
+            title="Edit metadata"
+          >
+            <span className="hidden sm:inline text-gray-400 mr-1">{name}</span>
+            {formOpen ? '✕' : '✎'}
+          </button>
+        </div>
         {formOpen && (
           <div className="px-4 py-4 bg-gray-50 border-t border-purple-100">
             {form}
           </div>
         )}
       </div>
-      <div className="space-y-2">
-        {children}
-      </div>
+      {expanded && (
+        <div className="space-y-2">
+          {children}
+        </div>
+      )}
     </div>
   )
 }
