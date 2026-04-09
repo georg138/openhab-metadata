@@ -1,5 +1,7 @@
 import type { LightConfig, LightTreeNode, OHItem, Room, ShutterConfig, ShutterTreeNode, ShutterItem, LightItem } from './types'
 
+export const GLOBAL_DEFAULTS_ITEM = 'gAll'
+
 const BASE = '/rest'
 
 const LIGHT_CONTROL_TYPES = new Set(['Switch', 'Dimmer', 'Color'])
@@ -226,4 +228,25 @@ export async function deleteMetadata(
     method: 'DELETE',
   })
   if (!res.ok) throw new Error(`Failed to delete metadata: HTTP ${res.status}`)
+}
+
+export interface GlobalDefaults {
+  shutterConfig: ShutterConfig | null
+  lightConfig: LightConfig | null
+}
+
+export async function fetchGlobalDefaults(): Promise<GlobalDefaults> {
+  try {
+    const item: OHItem = await fetchJSON(
+      `/items/${GLOBAL_DEFAULTS_ITEM}?metadata=ShutterAutomation,LightAutomation`
+    )
+    const s = item.metadata?.ShutterAutomation
+    const l = item.metadata?.LightAutomation
+    return {
+      shutterConfig: s ? (s.config as ShutterConfig) : null,
+      lightConfig: l ? (l.config as LightConfig) : null,
+    }
+  } catch {
+    return { shutterConfig: null, lightConfig: null }
+  }
 }

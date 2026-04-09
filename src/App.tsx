@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Room, ShutterTreeNode, LightTreeNode } from './types'
-import { fetchRooms } from './api'
+import { fetchRooms, fetchGlobalDefaults, type GlobalDefaults } from './api'
 import { RoomPanel } from './components/RoomPanel'
+import { GlobalDefaultsPanel } from './components/GlobalDefaultsPanel'
 
+const GLOBAL_SENTINEL = '__global__'
 const FLOOR_ORDER = ['EG', 'OG', 'UG', 'DG', 'Garten', 'Garage']
 
 function countTreeItems(node: ShutterTreeNode | LightTreeNode, _kind: 's' | 'l'): number {
@@ -26,19 +28,18 @@ function floorLabel(key: string) {
 
 export default function App() {
   const [rooms, setRooms] = useState<Room[]>([])
+  const [globalDefaults, setGlobalDefaults] = useState<GlobalDefaults>({ shutterConfig: null, lightConfig: null })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [selectedRoom, setSelectedRoom] = useState<string | null>(null)
+  const [selectedRoom, setSelectedRoom] = useState<string>(GLOBAL_SENTINEL)
 
   const load = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const data = await fetchRooms()
+      const [data, globals] = await Promise.all([fetchRooms(), fetchGlobalDefaults()])
       setRooms(data)
-      if (data.length > 0 && !selectedRoom) {
-        setSelectedRoom(data[0].name)
-      }
+      setGlobalDefaults(globals)
     } catch (e) {
       setError(String(e))
     } finally {
@@ -49,6 +50,7 @@ export default function App() {
   useEffect(() => { load() }, [load])
 
   const currentRoom = rooms.find((r) => r.name === selectedRoom)
+  const showGlobal = selectedRoom === GLOBAL_SENTINEL
 
   // Group rooms by floor
   const byFloor = FLOOR_ORDER.reduce<Record<string, Room[]>>((acc, f) => {
@@ -68,6 +70,21 @@ export default function App() {
           <p className="text-xs text-gray-400 mt-0.5">Automation configuration</p>
         </div>
         <nav className="flex-1 overflow-y-auto py-2">
+          {/* Global defaults pinned at top */}
+          <button
+            onClick={() => setSelectedRoom(GLOBAL_SENTINEL)}
+            className={`w-full text-left px-4 py-2 text-sm transition-colors flex justify-between items-center border-b border-gray-100 mb-1 ${
+              showGlobal
+                ? 'bg-amber-50 text-amber-700 font-medium'
+                : 'text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <span>🌐 Global Defaults</span>
+            <span className="text-xs">
+              {(globalDefaults.shutterConfig ? '🪟' : '') + (globalDefaults.lightConfig ? '💡' : '')}
+            </span>
+          </button>
+
           {loading && <p className="px-4 py-2 text-xs text-gray-400">Loading…</p>}
           {error && <p className="px-4 py-2 text-xs text-red-500">{error}</p>}
           {Object.entries(byFloor).map(([floor, rs]) => (
@@ -109,7 +126,17 @@ export default function App() {
 
       {/* Main content */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        {currentRoom ? (
+        {showGlobal ? (
+          <>
+            <header className="px-6 py-4 bg-white border-b border-gray-200 shrink-0">
+              <h2 className="text-lg font-semibold text-gray-900">🌐 Global Defaults</h2>
+              <p className="text-xs text-gray-400 mt-0.5">Last-resort fallback for all rooms</p>
+            </header>
+            <div className="flex-1 overflow-hidden">
+              <GlobalDefaultsPanel defaults={globalDefaults} onRefresh={load} />
+            </div>
+          </>
+        ) : currentRoom ? (
           <>
             <header className="px-6 py-4 bg-white border-b border-gray-200 shrink-0">
               <h2 className="text-lg font-semibold text-gray-900">{currentRoom.label}</h2>
@@ -121,7 +148,7 @@ export default function App() {
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center text-gray-400">
-            {loading ? 'Loading rooms…' : 'Select a room'}
+            {loading ? 'Loading…' : 'Select a room'}
           </div>
         )}
       </main>

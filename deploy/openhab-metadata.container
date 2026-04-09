@@ -1,0 +1,18 @@
+[Unit]
+Description=openhab-metadata web UI container
+Wants=network-online.target
+After=network-online.target
+
+[Container]
+Image=ghcr.io/georg138/openhab-metadata:latest
+ContainerName=openhab-metadata
+PublishPort=5180:5180
+Environment=OPENHAB_URL=http://openhab:8080
+Environment=OPENHAB_TOKEN=
+
+[Service]
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target default.target
