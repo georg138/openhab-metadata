@@ -59,7 +59,7 @@ export interface Room {
   lightTree: LightTreeNode[]
 }
 
-export const ASTRO_EVENTS = ['CIVIL_DAWN', 'SUN_RISE', 'SUNRISE', 'SUN_SET', 'SUNSET', 'CIVIL_DUSK'] as const
+export const ASTRO_EVENTS = ['CIVIL_DAWN', 'SUN_RISE', 'SUN_SET', 'CIVIL_DUSK'] as const
 export type AstroEvent = (typeof ASTRO_EVENTS)[number]
 
 export interface ShutterConfig {

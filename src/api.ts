@@ -1,6 +1,6 @@
 import type { LightConfig, LightTreeNode, OHItem, Room, ShutterConfig, ShutterTreeNode, ShutterItem, LightItem } from './types'
 
-export const GLOBAL_DEFAULTS_ITEM = 'gAll'
+export const GLOBAL_DEFAULTS_ITEM = 'Automation_Vorgaben'
 
 const BASE = '/rest'
 
