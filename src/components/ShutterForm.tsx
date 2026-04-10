@@ -124,15 +124,15 @@ export function ShutterForm({ itemName, initial, fromLocation, onSaved }: Props)
           </label>
           <label className="block">
             <span className="field-label">Min Elevation °</span>
-            <input className="field" type="number" min={0} max={90} placeholder="10" value={cfg.sunMinElevation ?? ''} onChange={(e) => set('sunMinElevation', e.target.value)} disabled={!sunEnabled} />
+            <input className="field" type="number" min={0} max={90} placeholder="10" value={cfg.sunMinElevation ?? ''} onChange={(e) => set('sunMinElevation', e.target.value)} />
           </label>
           <label className="block">
             <span className="field-label">Protection Position</span>
-            <input className="field" type="number" min={0} max={100} placeholder="80" value={cfg.sunProtectionPosition ?? ''} onChange={(e) => set('sunProtectionPosition', e.target.value)} disabled={!sunEnabled} />
+            <input className="field" type="number" min={0} max={100} placeholder="80" value={cfg.sunProtectionPosition ?? ''} onChange={(e) => set('sunProtectionPosition', e.target.value)} />
           </label>
         </div>
         {!sunEnabled && (
-          <p className="text-xs text-gray-400 mt-1">Set Sun Direction to enable sun protection.</p>
+          <p className="text-xs text-gray-400 mt-1">Set Sun Direction on individual items to activate sun protection.</p>
         )}
       </section>
 
