@@ -23,6 +23,8 @@ export interface ShutterItem {
   locationName: string
   metadata: ShutterConfig | null
   metadataFromLocation: boolean
+  effectiveConfig: ShutterConfig
+  effectiveSources: Partial<Record<keyof ShutterConfig, string>>
 }
 
 export interface LightItem {
@@ -31,6 +33,8 @@ export interface LightItem {
   locationName: string
   metadata: LightConfig | null
   metadataFromLocation: boolean
+  effectiveConfig: LightConfig
+  effectiveSources: Partial<Record<keyof LightConfig, string>>
 }
 
 export interface ShutterTreeNode {

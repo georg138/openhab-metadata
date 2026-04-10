@@ -14,15 +14,37 @@ async function fetchJSON(path: string) {
   return res.json()
 }
 
+/** Merge a list of configs from lowest to highest priority, tracking each field's source. */
+function mergeConfigs<T extends object>(
+  layers: Array<{ config: T | null; source: string }>
+): { effective: T; sources: Partial<Record<keyof T, string>> } {
+  const effective = {} as T
+  const sources = {} as Partial<Record<keyof T, string>>
+  for (const { config, source } of layers) {
+    if (!config) continue
+    for (const [k, v] of Object.entries(config)) {
+      if (v !== undefined && v !== '') {
+        (effective as Record<string, unknown>)[k] = v
+        ;(sources as Record<string, string>)[k] = source
+      }
+    }
+  }
+  return { effective, sources }
+}
+
 /**
  * Fetch all items enriched with ShutterAutomation + LightAutomation + semantics metadata,
  * then build a Room[] array grouping shutters and lights by their semantic location.
  */
 export async function fetchRooms(): Promise<Room[]> {
-  const [items, tags]: [OHItem[], { uid: string; name: string }[]] = await Promise.all([
+  const [items, tags, globalItem]: [OHItem[], { uid: string; name: string }[], OHItem | null] = await Promise.all([
     fetchJSON('/items?metadata=ShutterAutomation,LightAutomation,semantics&fields=name,type,label,tags,groupNames,metadata'),
     fetchJSON('/tags'),
+    fetchJSON(`/items/${GLOBAL_DEFAULTS_ITEM}?metadata=ShutterAutomation,LightAutomation`).catch(() => null),
   ])
+
+  const globalShutterConfig = globalItem?.metadata?.ShutterAutomation?.config as ShutterConfig ?? null
+  const globalLightConfig = globalItem?.metadata?.LightAutomation?.config as LightConfig ?? null
 
   // Build room tag set dynamically from the Location_* tags
   const roomTagSet = new Set(
@@ -127,21 +149,29 @@ export async function fetchRooms(): Promise<Room[]> {
       if (!parent.children.some((c) => c.name === child.name)) parent.children.push(child)
     }
 
-    // Determine item metadata (item-level → location fallback)
+    // Determine item-level metadata (no location fallback for own metadata)
     const rawMeta = item.metadata?.ShutterAutomation
-    let shutterMeta: ShutterConfig | null = rawMeta ? (rawMeta.config as ShutterConfig) : null
-    let fromLocation = false
-    if (!shutterMeta) {
-      const locMeta = loc.metadata?.ShutterAutomation
-      if (locMeta) { shutterMeta = locMeta.config as ShutterConfig; fromLocation = true }
-    }
+    const shutterMeta: ShutterConfig | null = rawMeta ? (rawMeta.config as ShutterConfig) : null
+
+    // Compute effective config: global → room → equipment chain (root→direct) → item
+    const { effective: effectiveConfig, sources: effectiveSources } = mergeConfigs<ShutterConfig>([
+      { config: globalShutterConfig, source: `Global (${GLOBAL_DEFAULTS_ITEM})` },
+      { config: room.shutterDefault, source: `Room (${loc.label ?? loc.name})` },
+      ...chain.slice().reverse().map((n) => ({
+        config: n.metadata?.ShutterAutomation?.config as ShutterConfig ?? null,
+        source: `Equipment (${n.label ?? n.name})`,
+      })),
+      { config: shutterMeta, source: 'Item' },
+    ])
 
     const shutter: ShutterItem = {
       name: item.name,
       label: item.label ?? item.name,
       locationName: loc.name,
       metadata: shutterMeta,
-      metadataFromLocation: fromLocation,
+      metadataFromLocation: false,
+      effectiveConfig,
+      effectiveSources,
     }
     // Item belongs to its direct equipment (chain[0])
     nodes[0].items.push(shutter)
@@ -173,23 +203,27 @@ export async function fetchRooms(): Promise<Room[]> {
     }
 
     const rawMeta = item.metadata?.LightAutomation
-    let lightMeta: LightConfig | null = rawMeta ? (rawMeta.config as LightConfig) : null
-    let fromLocation = false
-    if (!lightMeta) {
-      const chainMeta = chain.map((n) => n.metadata?.LightAutomation).find(Boolean)
-      if (chainMeta) { lightMeta = chainMeta.config as LightConfig; fromLocation = true }
-      else {
-        const locMeta = loc.metadata?.LightAutomation
-        if (locMeta) { lightMeta = locMeta.config as LightConfig; fromLocation = true }
-      }
-    }
+    const lightMeta: LightConfig | null = rawMeta ? (rawMeta.config as LightConfig) : null
+
+    // Compute effective config: global → room → equipment chain (root→direct) → item
+    const { effective: effectiveConfig, sources: effectiveSources } = mergeConfigs<LightConfig>([
+      { config: globalLightConfig, source: `Global (${GLOBAL_DEFAULTS_ITEM})` },
+      { config: room.lightDefault, source: `Room (${loc.label ?? loc.name})` },
+      ...chain.slice().reverse().map((n) => ({
+        config: n.metadata?.LightAutomation?.config as LightConfig ?? null,
+        source: `Equipment (${n.label ?? n.name})`,
+      })),
+      { config: lightMeta, source: 'Item' },
+    ])
 
     const light: LightItem = {
       name: item.name,
       label: item.label ?? item.name,
       locationName: loc.name,
       metadata: lightMeta,
-      metadataFromLocation: fromLocation,
+      metadataFromLocation: false,
+      effectiveConfig,
+      effectiveSources,
     }
     nodes[0].items.push(light)
 

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { LightItem, LightTreeNode, Room, ShutterItem, ShutterTreeNode } from '../types'
 import { ShutterForm } from './ShutterForm'
 import { LightForm } from './LightForm'
+import { EffectiveSummary } from './EffectiveSummary'
 
 interface Props {
   room: Room
@@ -112,6 +113,7 @@ function ShutterLeaf({ item, depth, onRefresh }: { item: ShutterItem; depth: num
   return (
     <ExpandCard title={item.label} subtitle={item.name} hasMeta={!!item.metadata} depth={depth}>
       <ShutterForm itemName={item.name} initial={item.metadata} fromLocation={item.metadataFromLocation} onSaved={onRefresh} />
+      <EffectiveSummary kind="shutter" config={item.effectiveConfig} sources={item.effectiveSources} />
     </ExpandCard>
   )
 }
@@ -120,6 +122,7 @@ function LightLeaf({ item, depth, onRefresh }: { item: LightItem; depth: number;
   return (
     <ExpandCard title={item.label} subtitle={item.name} hasMeta={!!item.metadata} depth={depth}>
       <LightForm itemName={item.name} initial={item.metadata} fromLocation={item.metadataFromLocation} onSaved={onRefresh} />
+      <EffectiveSummary kind="light" config={item.effectiveConfig} sources={item.effectiveSources} />
     </ExpandCard>
   )
 }
