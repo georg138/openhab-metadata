@@ -2,10 +2,16 @@ import { useState } from 'react'
 import { ASTRO_EVENTS, type LightConfig } from '../types'
 import { saveMetadata, deleteMetadata } from '../api'
 
+export interface LightTimeSuggestions {
+  earliestOn: string[]
+  latestOff: string[]
+}
+
 interface Props {
   itemName: string
   initial: LightConfig | null
   fromLocation: boolean
+  suggestions?: LightTimeSuggestions
   onSaved: () => void
 }
 
@@ -18,7 +24,7 @@ const DEFAULTS: LightConfig = {
   latestOff: '',
 }
 
-export function LightForm({ itemName, initial, fromLocation, onSaved }: Props) {
+export function LightForm({ itemName, initial, fromLocation, suggestions, onSaved }: Props) {
   const [cfg, setCfg] = useState<LightConfig>(initial ?? DEFAULTS)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -86,11 +92,17 @@ export function LightForm({ itemName, initial, fromLocation, onSaved }: Props) {
           </label>
           <label className="block">
             <span className="field-label">Earliest On <span className="text-gray-400">HH:mm</span></span>
-            <input className="field" type="time" value={cfg.earliestOn ?? ''} onChange={(e) => set('earliestOn', e.target.value)} />
+            <input className="field" list="light-earliestOn-opts" type="time" value={cfg.earliestOn ?? ''} onChange={(e) => set('earliestOn', e.target.value)} />
+            <datalist id="light-earliestOn-opts">
+              {(suggestions?.earliestOn ?? []).map((v) => <option key={v} value={v} />)}
+            </datalist>
           </label>
           <label className="block">
             <span className="field-label">Latest Off <span className="text-gray-400">HH:mm</span></span>
-            <input className="field" type="time" value={cfg.latestOff ?? ''} onChange={(e) => set('latestOff', e.target.value)} />
+            <input className="field" list="light-latestOff-opts" type="time" value={cfg.latestOff ?? ''} onChange={(e) => set('latestOff', e.target.value)} />
+            <datalist id="light-latestOff-opts">
+              {(suggestions?.latestOff ?? []).map((v) => <option key={v} value={v} />)}
+            </datalist>
           </label>
         </div>
       </section>

@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import type { LightItem, LightTreeNode, Room, ShutterItem, ShutterTreeNode } from '../types'
-import { ShutterForm } from './ShutterForm'
-import { LightForm } from './LightForm'
+import { ShutterForm, type ShutterTimeSuggestions } from './ShutterForm'
+import { LightForm, type LightTimeSuggestions } from './LightForm'
 import { EffectiveSummary } from './EffectiveSummary'
 
 interface Props {
   room: Room
+  shutterSuggestions: ShutterTimeSuggestions
+  lightSuggestions: LightTimeSuggestions
   onRefresh: () => void
 }
 
@@ -18,7 +20,7 @@ function countLightItems(node: LightTreeNode): number {
   return node.items.length + node.children.reduce((s, c) => s + countLightItems(c), 0)
 }
 
-export function RoomPanel({ room, onRefresh }: Props) {
+export function RoomPanel({ room, shutterSuggestions, lightSuggestions, onRefresh }: Props) {
   const [tab, setTab] = useState<Tab>('defaults')
 
   const totalShutters = room.shutterTree.reduce((s, n) => s + countShutterItems(n), 0)
@@ -47,22 +49,22 @@ export function RoomPanel({ room, onRefresh }: Props) {
               Metadata set here applies to <strong>all</strong> shutters or lights in this room that don't have their own item-level metadata (location fallback).
             </div>
             <ExpandCard title="Shutter Default" subtitle={`${room.name} › ShutterAutomation`} hasMeta={!!room.shutterDefault}>
-              <ShutterForm itemName={room.name} initial={room.shutterDefault} fromLocation={false} onSaved={onRefresh} />
+              <ShutterForm itemName={room.name} initial={room.shutterDefault} fromLocation={false} suggestions={shutterSuggestions} onSaved={onRefresh} />
             </ExpandCard>
             <ExpandCard title="Light Default" subtitle={`${room.name} › LightAutomation`} hasMeta={!!room.lightDefault}>
-              <LightForm itemName={room.name} initial={room.lightDefault} fromLocation={false} onSaved={onRefresh} />
+              <LightForm itemName={room.name} initial={room.lightDefault} fromLocation={false} suggestions={lightSuggestions} onSaved={onRefresh} />
             </ExpandCard>
           </div>
         )}
 
         {tab === 'shutters' && room.shutterTree.length === 0 && <Empty>No rollershutters in this room.</Empty>}
         {tab === 'shutters' && room.shutterTree.map((node) => (
-          <ShutterNode key={node.name} node={node} depth={0} onRefresh={onRefresh} />
+          <ShutterNode key={node.name} node={node} depth={0} suggestions={shutterSuggestions} onRefresh={onRefresh} />
         ))}
 
         {tab === 'lights' && room.lightTree.length === 0 && <Empty>No light items in this room.</Empty>}
         {tab === 'lights' && room.lightTree.map((node) => (
-          <LightNode key={node.name} node={node} depth={0} onRefresh={onRefresh} />
+          <LightNode key={node.name} node={node} depth={0} suggestions={lightSuggestions} onRefresh={onRefresh} />
         ))}
       </div>
     </div>
@@ -71,57 +73,57 @@ export function RoomPanel({ room, onRefresh }: Props) {
 
 // ── Recursive tree components ─────────────────────────────────────────────────
 
-function ShutterNode({ node, depth, onRefresh }: { node: ShutterTreeNode; depth: number; onRefresh: () => void }) {
+function ShutterNode({ node, depth, suggestions, onRefresh }: { node: ShutterTreeNode; depth: number; suggestions: ShutterTimeSuggestions; onRefresh: () => void }) {
   return (
     <TreeGroup
       name={node.name}
       label={node.label}
       hasMeta={!!node.metadata}
       depth={depth}
-      form={<ShutterForm itemName={node.name} initial={node.metadata} fromLocation={false} onSaved={onRefresh} />}
+      form={<ShutterForm itemName={node.name} initial={node.metadata} fromLocation={false} suggestions={suggestions} onSaved={onRefresh} />}
     >
       {node.children.map((child) => (
-        <ShutterNode key={child.name} node={child} depth={depth + 1} onRefresh={onRefresh} />
+        <ShutterNode key={child.name} node={child} depth={depth + 1} suggestions={suggestions} onRefresh={onRefresh} />
       ))}
       {node.items.map((item) => (
-        <ShutterLeaf key={item.name} item={item} depth={depth + 1} onRefresh={onRefresh} />
+        <ShutterLeaf key={item.name} item={item} depth={depth + 1} suggestions={suggestions} onRefresh={onRefresh} />
       ))}
     </TreeGroup>
   )
 }
 
-function LightNode({ node, depth, onRefresh }: { node: LightTreeNode; depth: number; onRefresh: () => void }) {
+function LightNode({ node, depth, suggestions, onRefresh }: { node: LightTreeNode; depth: number; suggestions: LightTimeSuggestions; onRefresh: () => void }) {
   return (
     <TreeGroup
       name={node.name}
       label={node.label}
       hasMeta={!!node.metadata}
       depth={depth}
-      form={<LightForm itemName={node.name} initial={node.metadata} fromLocation={false} onSaved={onRefresh} />}
+      form={<LightForm itemName={node.name} initial={node.metadata} fromLocation={false} suggestions={suggestions} onSaved={onRefresh} />}
     >
       {node.children.map((child) => (
-        <LightNode key={child.name} node={child} depth={depth + 1} onRefresh={onRefresh} />
+        <LightNode key={child.name} node={child} depth={depth + 1} suggestions={suggestions} onRefresh={onRefresh} />
       ))}
       {node.items.map((item) => (
-        <LightLeaf key={item.name} item={item} depth={depth + 1} onRefresh={onRefresh} />
+        <LightLeaf key={item.name} item={item} depth={depth + 1} suggestions={suggestions} onRefresh={onRefresh} />
       ))}
     </TreeGroup>
   )
 }
 
-function ShutterLeaf({ item, depth, onRefresh }: { item: ShutterItem; depth: number; onRefresh: () => void }) {
+function ShutterLeaf({ item, depth, suggestions, onRefresh }: { item: ShutterItem; depth: number; suggestions: ShutterTimeSuggestions; onRefresh: () => void }) {
   return (
     <ExpandCard title={item.label} subtitle={item.name} hasMeta={!!item.metadata} depth={depth}>
-      <ShutterForm itemName={item.name} initial={item.metadata} fromLocation={item.metadataFromLocation} onSaved={onRefresh} />
+      <ShutterForm itemName={item.name} initial={item.metadata} fromLocation={item.metadataFromLocation} suggestions={suggestions} onSaved={onRefresh} />
       <EffectiveSummary kind="shutter" config={item.effectiveConfig} sources={item.effectiveSources} />
     </ExpandCard>
   )
 }
 
-function LightLeaf({ item, depth, onRefresh }: { item: LightItem; depth: number; onRefresh: () => void }) {
+function LightLeaf({ item, depth, suggestions, onRefresh }: { item: LightItem; depth: number; suggestions: LightTimeSuggestions; onRefresh: () => void }) {
   return (
     <ExpandCard title={item.label} subtitle={item.name} hasMeta={!!item.metadata} depth={depth}>
-      <LightForm itemName={item.name} initial={item.metadata} fromLocation={item.metadataFromLocation} onSaved={onRefresh} />
+      <LightForm itemName={item.name} initial={item.metadata} fromLocation={item.metadataFromLocation} suggestions={suggestions} onSaved={onRefresh} />
       <EffectiveSummary kind="light" config={item.effectiveConfig} sources={item.effectiveSources} />
     </ExpandCard>
   )

@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useState } from 'react'
-import type { Room, ShutterTreeNode, LightTreeNode } from './types'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import type { Room, ShutterTreeNode, LightTreeNode, ShutterItem, LightItem } from './types'
 import { fetchRooms, fetchGlobalDefaults, type GlobalDefaults } from './api'
 import { RoomPanel } from './components/RoomPanel'
 import { GlobalDefaultsPanel } from './components/GlobalDefaultsPanel'
 import { SummaryPage } from './components/SummaryPage'
+import type { ShutterTimeSuggestions } from './components/ShutterForm'
+import type { LightTimeSuggestions } from './components/LightForm'
 
 const GLOBAL_SENTINEL = '__global__'
 const SUMMARY_SENTINEL = '__summary__'
@@ -11,6 +13,20 @@ const FLOOR_ORDER = ['EG', 'OG', 'UG', 'DG', 'Garten', 'Garage']
 
 function countTreeItems(node: ShutterTreeNode | LightTreeNode, _kind: 's' | 'l'): number {
   return node.items.length + node.children.reduce((s, c) => s + countTreeItems(c, _kind), 0)
+}
+
+function flattenShutters(nodes: ShutterTreeNode[]): ShutterItem[] {
+  const out: ShutterItem[] = []
+  function walk(n: ShutterTreeNode) { out.push(...n.items); n.children.forEach(walk) }
+  nodes.forEach(walk)
+  return out
+}
+
+function flattenLights(nodes: LightTreeNode[]): LightItem[] {
+  const out: LightItem[] = []
+  function walk(n: LightTreeNode) { out.push(...n.items); n.children.forEach(walk) }
+  nodes.forEach(walk)
+  return out
 }
 
 function floorOf(room: Room) {
@@ -56,6 +72,32 @@ export default function App() {
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  const shutterSuggestions = useMemo<ShutterTimeSuggestions>(() => {
+    const eo = new Set<string>(), lc = new Set<string>()
+    for (const r of rooms) {
+      if (r.shutterDefault?.earliestOpen) eo.add(r.shutterDefault.earliestOpen)
+      if (r.shutterDefault?.latestClose) lc.add(r.shutterDefault.latestClose)
+      flattenShutters(r.shutterTree).forEach((it) => {
+        if (it.metadata?.earliestOpen) eo.add(it.metadata.earliestOpen)
+        if (it.metadata?.latestClose) lc.add(it.metadata.latestClose)
+      })
+    }
+    return { earliestOpen: [...eo].sort(), latestClose: [...lc].sort() }
+  }, [rooms])
+
+  const lightSuggestions = useMemo<LightTimeSuggestions>(() => {
+    const eon = new Set<string>(), lo = new Set<string>()
+    for (const r of rooms) {
+      if (r.lightDefault?.earliestOn) eon.add(r.lightDefault.earliestOn)
+      if (r.lightDefault?.latestOff) lo.add(r.lightDefault.latestOff)
+      flattenLights(r.lightTree).forEach((it) => {
+        if (it.metadata?.earliestOn) eon.add(it.metadata.earliestOn)
+        if (it.metadata?.latestOff) lo.add(it.metadata.latestOff)
+      })
+    }
+    return { earliestOn: [...eon].sort(), latestOff: [...lo].sort() }
+  }, [rooms])
 
   const currentRoom = rooms.find((r) => r.name === selectedRoom)
   const showGlobal = selectedRoom === GLOBAL_SENTINEL
@@ -186,7 +228,7 @@ export default function App() {
               </div>
             </header>
             <div className="flex-1 overflow-hidden">
-              <GlobalDefaultsPanel defaults={globalDefaults} onRefresh={load} />
+              <GlobalDefaultsPanel defaults={globalDefaults} shutterSuggestions={shutterSuggestions} lightSuggestions={lightSuggestions} onRefresh={load} />
             </div>
           </>
         ) : showSummary ? (
@@ -220,7 +262,7 @@ export default function App() {
               </div>
             </header>
             <div className="flex-1 overflow-hidden">
-              <RoomPanel room={currentRoom} onRefresh={load} />
+              <RoomPanel room={currentRoom} shutterSuggestions={shutterSuggestions} lightSuggestions={lightSuggestions} onRefresh={load} />
             </div>
           </>
         ) : (

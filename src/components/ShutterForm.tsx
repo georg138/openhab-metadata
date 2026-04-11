@@ -2,10 +2,16 @@ import { useState } from 'react'
 import { ASTRO_EVENTS, type ShutterConfig } from '../types'
 import { saveMetadata, deleteMetadata } from '../api'
 
+export interface ShutterTimeSuggestions {
+  earliestOpen: string[]
+  latestClose: string[]
+}
+
 interface Props {
   itemName: string
   initial: ShutterConfig | null
   fromLocation: boolean
+  suggestions?: ShutterTimeSuggestions
   onSaved: () => void
 }
 
@@ -22,7 +28,7 @@ const DEFAULTS: ShutterConfig = {
   doorSensorItem: '',
 }
 
-export function ShutterForm({ itemName, initial, fromLocation, onSaved }: Props) {
+export function ShutterForm({ itemName, initial, fromLocation, suggestions, onSaved }: Props) {
   const [cfg, setCfg] = useState<ShutterConfig>(initial ?? DEFAULTS)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -100,11 +106,17 @@ export function ShutterForm({ itemName, initial, fromLocation, onSaved }: Props)
           </label>
           <label className="block">
             <span className="field-label">Earliest Open <span className="text-gray-400">HH:mm</span></span>
-            <input className="field" type="time" value={cfg.earliestOpen ?? ''} onChange={(e) => set('earliestOpen', e.target.value)} />
+            <input className="field" list="shutter-earliestOpen-opts" type="time" value={cfg.earliestOpen ?? ''} onChange={(e) => set('earliestOpen', e.target.value)} />
+            <datalist id="shutter-earliestOpen-opts">
+              {(suggestions?.earliestOpen ?? []).map((v) => <option key={v} value={v} />)}
+            </datalist>
           </label>
           <label className="block">
             <span className="field-label">Latest Close <span className="text-gray-400">HH:mm</span></span>
-            <input className="field" type="time" value={cfg.latestClose ?? ''} onChange={(e) => set('latestClose', e.target.value)} />
+            <input className="field" list="shutter-latestClose-opts" type="time" value={cfg.latestClose ?? ''} onChange={(e) => set('latestClose', e.target.value)} />
+            <datalist id="shutter-latestClose-opts">
+              {(suggestions?.latestClose ?? []).map((v) => <option key={v} value={v} />)}
+            </datalist>
           </label>
         </div>
       </section>

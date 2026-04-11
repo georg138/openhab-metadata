@@ -1,15 +1,17 @@
 import { useState } from 'react'
 import type { GlobalDefaults } from '../api'
 import { GLOBAL_DEFAULTS_ITEM } from '../api'
-import { ShutterForm } from './ShutterForm'
-import { LightForm } from './LightForm'
+import { ShutterForm, type ShutterTimeSuggestions } from './ShutterForm'
+import { LightForm, type LightTimeSuggestions } from './LightForm'
 
 interface Props {
   defaults: GlobalDefaults
+  shutterSuggestions: ShutterTimeSuggestions
+  lightSuggestions: LightTimeSuggestions
   onRefresh: () => void
 }
 
-export function GlobalDefaultsPanel({ defaults, onRefresh }: Props) {
+export function GlobalDefaultsPanel({ defaults, shutterSuggestions, lightSuggestions, onRefresh }: Props) {
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
@@ -24,6 +26,7 @@ export function GlobalDefaultsPanel({ defaults, onRefresh }: Props) {
             itemName={GLOBAL_DEFAULTS_ITEM}
             initial={defaults.shutterConfig}
             fromLocation={false}
+            suggestions={shutterSuggestions}
             onSaved={onRefresh}
           />
         </ExpandCard>
@@ -33,6 +36,7 @@ export function GlobalDefaultsPanel({ defaults, onRefresh }: Props) {
             itemName={GLOBAL_DEFAULTS_ITEM}
             initial={defaults.lightConfig}
             fromLocation={false}
+            suggestions={lightSuggestions}
             onSaved={onRefresh}
           />
         </ExpandCard>
