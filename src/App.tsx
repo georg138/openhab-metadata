@@ -10,6 +10,8 @@ import type { LightTimeSuggestions } from './components/LightForm'
 const GLOBAL_SENTINEL = '__global__'
 const SUMMARY_SENTINEL = '__summary__'
 const FLOOR_ORDER = ['EG', 'OG', 'UG', 'DG', 'Garten', 'Garage']
+// OK_ is an alias for OG_ (upper floor variant naming)
+const FLOOR_ALIAS: Record<string, string> = { OK: 'OG' }
 
 function countTreeItems(node: ShutterTreeNode | LightTreeNode, _kind: 's' | 'l'): number {
   return node.items.length + node.children.reduce((s, c) => s + countTreeItems(c, _kind), 0)
@@ -46,6 +48,9 @@ function flattenLightNodes(nodes: LightTreeNode[]): LightTreeNode[] {
 function floorOf(room: Room) {
   for (const f of FLOOR_ORDER) {
     if (room.name.startsWith(f + '_') || room.name === f) return f
+  }
+  for (const [alias, canonical] of Object.entries(FLOOR_ALIAS)) {
+    if (room.name.startsWith(alias + '_') || room.name === alias) return canonical
   }
   return 'Other'
 }
