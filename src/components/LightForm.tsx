@@ -79,14 +79,16 @@ export function LightForm({ itemName, initial, fromLocation, suggestions, onSave
           <label className="block">
             <span className="field-label">On Event</span>
             <select className="field" value={cfg.onEvent ?? ''} onChange={(e) => set('onEvent', e.target.value)}>
-              <option value="">— unset —</option>
+              <option value="">↑ inherit</option>
+              <option value="UNSET">✕ UNSET (disable)</option>
               {ASTRO_EVENTS.map((ev) => <option key={ev}>{ev}</option>)}
             </select>
           </label>
           <label className="block">
             <span className="field-label">Off Event</span>
             <select className="field" value={cfg.offEvent ?? ''} onChange={(e) => set('offEvent', e.target.value)}>
-              <option value="">— unset —</option>
+              <option value="">↑ inherit</option>
+              <option value="UNSET">✕ UNSET (disable)</option>
               {ASTRO_EVENTS.map((ev) => <option key={ev}>{ev}</option>)}
             </select>
           </label>
