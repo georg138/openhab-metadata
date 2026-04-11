@@ -262,7 +262,7 @@ export default function App() {
               </div>
             </header>
             <div className="flex-1 overflow-hidden">
-              <RoomPanel room={currentRoom} shutterSuggestions={shutterSuggestions} lightSuggestions={lightSuggestions} onRefresh={load} />
+              <RoomPanel key={currentRoom.name} room={currentRoom} shutterSuggestions={shutterSuggestions} lightSuggestions={lightSuggestions} onRefresh={load} />
             </div>
           </>
         ) : (
