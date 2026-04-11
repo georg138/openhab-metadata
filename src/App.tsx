@@ -22,9 +22,23 @@ function flattenShutters(nodes: ShutterTreeNode[]): ShutterItem[] {
   return out
 }
 
+function flattenShutterNodes(nodes: ShutterTreeNode[]): ShutterTreeNode[] {
+  const out: ShutterTreeNode[] = []
+  function walk(n: ShutterTreeNode) { out.push(n); n.children.forEach(walk) }
+  nodes.forEach(walk)
+  return out
+}
+
 function flattenLights(nodes: LightTreeNode[]): LightItem[] {
   const out: LightItem[] = []
   function walk(n: LightTreeNode) { out.push(...n.items); n.children.forEach(walk) }
+  nodes.forEach(walk)
+  return out
+}
+
+function flattenLightNodes(nodes: LightTreeNode[]): LightTreeNode[] {
+  const out: LightTreeNode[] = []
+  function walk(n: LightTreeNode) { out.push(n); n.children.forEach(walk) }
   nodes.forEach(walk)
   return out
 }
@@ -75,29 +89,49 @@ export default function App() {
 
   const shutterSuggestions = useMemo<ShutterTimeSuggestions>(() => {
     const eo = new Set<string>(), lc = new Set<string>()
+    // global defaults
+    if (globalDefaults.shutterConfig?.earliestOpen) eo.add(globalDefaults.shutterConfig.earliestOpen)
+    if (globalDefaults.shutterConfig?.latestClose) lc.add(globalDefaults.shutterConfig.latestClose)
     for (const r of rooms) {
+      // room defaults
       if (r.shutterDefault?.earliestOpen) eo.add(r.shutterDefault.earliestOpen)
       if (r.shutterDefault?.latestClose) lc.add(r.shutterDefault.latestClose)
+      // equipment nodes
+      flattenShutterNodes(r.shutterTree).forEach((n) => {
+        if (n.metadata?.earliestOpen) eo.add(n.metadata.earliestOpen)
+        if (n.metadata?.latestClose) lc.add(n.metadata.latestClose)
+      })
+      // leaf items
       flattenShutters(r.shutterTree).forEach((it) => {
         if (it.metadata?.earliestOpen) eo.add(it.metadata.earliestOpen)
         if (it.metadata?.latestClose) lc.add(it.metadata.latestClose)
       })
     }
     return { earliestOpen: [...eo].sort(), latestClose: [...lc].sort() }
-  }, [rooms])
+  }, [rooms, globalDefaults])
 
   const lightSuggestions = useMemo<LightTimeSuggestions>(() => {
     const eon = new Set<string>(), lo = new Set<string>()
+    // global defaults
+    if (globalDefaults.lightConfig?.earliestOn) eon.add(globalDefaults.lightConfig.earliestOn)
+    if (globalDefaults.lightConfig?.latestOff) lo.add(globalDefaults.lightConfig.latestOff)
     for (const r of rooms) {
+      // room defaults
       if (r.lightDefault?.earliestOn) eon.add(r.lightDefault.earliestOn)
       if (r.lightDefault?.latestOff) lo.add(r.lightDefault.latestOff)
+      // equipment nodes
+      flattenLightNodes(r.lightTree).forEach((n) => {
+        if (n.metadata?.earliestOn) eon.add(n.metadata.earliestOn)
+        if (n.metadata?.latestOff) lo.add(n.metadata.latestOff)
+      })
+      // leaf items
       flattenLights(r.lightTree).forEach((it) => {
         if (it.metadata?.earliestOn) eon.add(it.metadata.earliestOn)
         if (it.metadata?.latestOff) lo.add(it.metadata.latestOff)
       })
     }
     return { earliestOn: [...eon].sort(), latestOff: [...lo].sort() }
-  }, [rooms])
+  }, [rooms, globalDefaults])
 
   const currentRoom = rooms.find((r) => r.name === selectedRoom)
   const showGlobal = selectedRoom === GLOBAL_SENTINEL
