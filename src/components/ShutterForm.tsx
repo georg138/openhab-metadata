@@ -84,7 +84,7 @@ export function ShutterForm({ itemName, initial, fromLocation, suggestions, onSa
         <div className="grid grid-cols-2 gap-3">
           <label className="block">
             <span className="field-label">Open Event</span>
-            <select className="field" value={cfg.openEvent ?? ''} onChange={(e) => set('openEvent', e.target.value)}>
+            <select className={`field ${!cfg.openEvent ? 'text-gray-400' : ''}`} value={cfg.openEvent ?? ''} onChange={(e) => set('openEvent', e.target.value)}>
               <option value="">↑ inherit</option>
               <option value="UNSET">✕ UNSET (disable)</option>
               {ASTRO_EVENTS.map((ev) => <option key={ev}>{ev}</option>)}
@@ -92,7 +92,7 @@ export function ShutterForm({ itemName, initial, fromLocation, suggestions, onSa
           </label>
           <label className="block">
             <span className="field-label">Close Event</span>
-            <select className="field" value={cfg.closeEvent ?? ''} onChange={(e) => set('closeEvent', e.target.value)}>
+            <select className={`field ${!cfg.closeEvent ? 'text-gray-400' : ''}`} value={cfg.closeEvent ?? ''} onChange={(e) => set('closeEvent', e.target.value)}>
               <option value="">↑ inherit</option>
               <option value="UNSET">✕ UNSET (disable)</option>
               {ASTRO_EVENTS.map((ev) => <option key={ev}>{ev}</option>)}
