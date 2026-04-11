@@ -3,8 +3,10 @@ import type { Room, ShutterTreeNode, LightTreeNode } from './types'
 import { fetchRooms, fetchGlobalDefaults, type GlobalDefaults } from './api'
 import { RoomPanel } from './components/RoomPanel'
 import { GlobalDefaultsPanel } from './components/GlobalDefaultsPanel'
+import { SummaryPage } from './components/SummaryPage'
 
 const GLOBAL_SENTINEL = '__global__'
+const SUMMARY_SENTINEL = '__summary__'
 const FLOOR_ORDER = ['EG', 'OG', 'UG', 'DG', 'Garten', 'Garage']
 
 function countTreeItems(node: ShutterTreeNode | LightTreeNode, _kind: 's' | 'l'): number {
@@ -51,6 +53,7 @@ export default function App() {
 
   const currentRoom = rooms.find((r) => r.name === selectedRoom)
   const showGlobal = selectedRoom === GLOBAL_SENTINEL
+  const showSummary = selectedRoom === SUMMARY_SENTINEL
 
   // Group rooms by floor
   const byFloor = FLOOR_ORDER.reduce<Record<string, Room[]>>((acc, f) => {
@@ -73,7 +76,7 @@ export default function App() {
           {/* Global defaults pinned at top */}
           <button
             onClick={() => setSelectedRoom(GLOBAL_SENTINEL)}
-            className={`w-full text-left px-4 py-2 text-sm transition-colors flex justify-between items-center border-b border-gray-100 mb-1 ${
+            className={`w-full text-left px-4 py-2 text-sm transition-colors flex justify-between items-center border-b border-gray-100 ${
               showGlobal
                 ? 'bg-amber-50 text-amber-700 font-medium'
                 : 'text-gray-700 hover:bg-gray-50'
@@ -82,6 +85,22 @@ export default function App() {
             <span>🌐 Global Defaults</span>
             <span className="text-xs">
               {(globalDefaults.shutterConfig ? '🪟' : '') + (globalDefaults.lightConfig ? '💡' : '')}
+            </span>
+          </button>
+          {/* Summary */}
+          <button
+            onClick={() => setSelectedRoom(SUMMARY_SENTINEL)}
+            className={`w-full text-left px-4 py-2 text-sm transition-colors flex justify-between items-center border-b border-gray-100 mb-1 ${
+              showSummary
+                ? 'bg-sky-50 text-sky-700 font-medium'
+                : 'text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <span>📊 Summary</span>
+            <span className="text-xs text-gray-400">
+              {rooms.reduce((s, r) => s + r.shutterTree.reduce((ss, n) => ss + countTreeItems(n, 's'), 0), 0)}🪟
+              {' · '}
+              {rooms.reduce((s, r) => s + r.lightTree.reduce((ss, n) => ss + countTreeItems(n, 'l'), 0), 0)}💡
             </span>
           </button>
 
@@ -134,6 +153,16 @@ export default function App() {
             </header>
             <div className="flex-1 overflow-hidden">
               <GlobalDefaultsPanel defaults={globalDefaults} onRefresh={load} />
+            </div>
+          </>
+        ) : showSummary ? (
+          <>
+            <header className="px-6 py-4 bg-white border-b border-gray-200 shrink-0">
+              <h2 className="text-lg font-semibold text-gray-900">📊 Summary</h2>
+              <p className="text-xs text-gray-400 mt-0.5">Effective values for all items across all rooms</p>
+            </header>
+            <div className="flex-1 overflow-hidden">
+              <SummaryPage rooms={rooms} />
             </div>
           </>
         ) : currentRoom ? (
