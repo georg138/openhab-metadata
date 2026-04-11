@@ -34,6 +34,12 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedRoom, setSelectedRoom] = useState<string>(GLOBAL_SENTINEL)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  function selectRoom(name: string) {
+    setSelectedRoom(name)
+    setSidebarOpen(false)  // close on mobile after selection
+  }
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -66,16 +72,37 @@ export default function App() {
 
   return (
     <div className="flex h-screen bg-gray-50 font-sans">
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-20 bg-black/40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-60 bg-white border-r border-gray-200 flex flex-col">
-        <div className="px-4 py-4 border-b border-gray-100">
-          <h1 className="text-base font-semibold text-gray-900">openHAB Metadata</h1>
-          <p className="text-xs text-gray-400 mt-0.5">Automation configuration</p>
+      <aside className={`
+        fixed inset-y-0 left-0 z-30 w-64 bg-white border-r border-gray-200 flex flex-col
+        transform transition-transform duration-200
+        md:static md:translate-x-0 md:w-60
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        <div className="px-4 py-4 border-b border-gray-100 flex items-center justify-between">
+          <div>
+            <h1 className="text-base font-semibold text-gray-900">openHAB Metadata</h1>
+            <p className="text-xs text-gray-400 mt-0.5">Automation configuration</p>
+          </div>
+          {/* Close button — mobile only */}
+          <button
+            className="md:hidden p-1 rounded text-gray-400 hover:text-gray-600"
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Close menu"
+          >✕</button>
         </div>
         <nav className="flex-1 overflow-y-auto py-2">
           {/* Global defaults pinned at top */}
           <button
-            onClick={() => setSelectedRoom(GLOBAL_SENTINEL)}
+            onClick={() => selectRoom(GLOBAL_SENTINEL)}
             className={`w-full text-left px-4 py-2 text-sm transition-colors flex justify-between items-center border-b border-gray-100 ${
               showGlobal
                 ? 'bg-amber-50 text-amber-700 font-medium'
@@ -89,7 +116,7 @@ export default function App() {
           </button>
           {/* Summary */}
           <button
-            onClick={() => setSelectedRoom(SUMMARY_SENTINEL)}
+            onClick={() => selectRoom(SUMMARY_SENTINEL)}
             className={`w-full text-left px-4 py-2 text-sm transition-colors flex justify-between items-center border-b border-gray-100 mb-1 ${
               showSummary
                 ? 'bg-sky-50 text-sky-700 font-medium'
@@ -114,7 +141,7 @@ export default function App() {
               {rs.map((room) => (
                 <button
                   key={room.name}
-                  onClick={() => setSelectedRoom(room.name)}
+                  onClick={() => selectRoom(room.name)}
                   className={`w-full text-left px-4 py-2 text-sm transition-colors flex justify-between items-center ${
                     selectedRoom === room.name
                       ? 'bg-blue-50 text-blue-700 font-medium'
@@ -144,12 +171,19 @@ export default function App() {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col overflow-hidden">
+      <main className="flex-1 flex flex-col overflow-hidden min-w-0">
         {showGlobal ? (
           <>
-            <header className="px-6 py-4 bg-white border-b border-gray-200 shrink-0">
-              <h2 className="text-lg font-semibold text-gray-900">🌐 Global Defaults</h2>
-              <p className="text-xs text-gray-400 mt-0.5">Last-resort fallback for all rooms</p>
+            <header className="px-4 md:px-6 py-4 bg-white border-b border-gray-200 shrink-0 flex items-center gap-3">
+              <button
+                className="md:hidden p-1.5 rounded text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                onClick={() => setSidebarOpen(true)}
+                aria-label="Open menu"
+              >☰</button>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">🌐 Global Defaults</h2>
+                <p className="text-xs text-gray-400 mt-0.5">Last-resort fallback for all rooms</p>
+              </div>
             </header>
             <div className="flex-1 overflow-hidden">
               <GlobalDefaultsPanel defaults={globalDefaults} onRefresh={load} />
@@ -157,9 +191,16 @@ export default function App() {
           </>
         ) : showSummary ? (
           <>
-            <header className="px-6 py-4 bg-white border-b border-gray-200 shrink-0">
-              <h2 className="text-lg font-semibold text-gray-900">📊 Summary</h2>
-              <p className="text-xs text-gray-400 mt-0.5">Effective values for all items across all rooms</p>
+            <header className="px-4 md:px-6 py-4 bg-white border-b border-gray-200 shrink-0 flex items-center gap-3">
+              <button
+                className="md:hidden p-1.5 rounded text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                onClick={() => setSidebarOpen(true)}
+                aria-label="Open menu"
+              >☰</button>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">📊 Summary</h2>
+                <p className="text-xs text-gray-400 mt-0.5">Effective values for all items across all rooms</p>
+              </div>
             </header>
             <div className="flex-1 overflow-hidden">
               <SummaryPage rooms={rooms} />
@@ -167,9 +208,16 @@ export default function App() {
           </>
         ) : currentRoom ? (
           <>
-            <header className="px-6 py-4 bg-white border-b border-gray-200 shrink-0">
-              <h2 className="text-lg font-semibold text-gray-900">{currentRoom.label}</h2>
-              <p className="text-xs text-gray-400 font-mono mt-0.5">{currentRoom.name}</p>
+            <header className="px-4 md:px-6 py-4 bg-white border-b border-gray-200 shrink-0 flex items-center gap-3">
+              <button
+                className="md:hidden p-1.5 rounded text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                onClick={() => setSidebarOpen(true)}
+                aria-label="Open menu"
+              >☰</button>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">{currentRoom.label}</h2>
+                <p className="text-xs text-gray-400 font-mono mt-0.5">{currentRoom.name}</p>
+              </div>
             </header>
             <div className="flex-1 overflow-hidden">
               <RoomPanel room={currentRoom} onRefresh={load} />
@@ -177,7 +225,13 @@ export default function App() {
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center text-gray-400">
-            {loading ? 'Loading…' : 'Select a room'}
+            <div className="text-center">
+              <button
+                className="md:hidden mb-4 px-4 py-2 rounded bg-white border border-gray-200 text-sm text-gray-600 shadow-sm"
+                onClick={() => setSidebarOpen(true)}
+              >☰ Open menu</button>
+              <p>{loading ? 'Loading…' : 'Select a room'}</p>
+            </div>
           </div>
         )}
       </main>
