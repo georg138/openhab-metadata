@@ -108,14 +108,14 @@ export function ShutterForm({ itemName, initial, fromLocation, suggestions, onSa
           </label>
           <label className="block">
             <span className="field-label">Earliest Open <span className="text-gray-400">HH:mm</span></span>
-            <input className="field" list="shutter-earliestOpen-opts" type="time" value={cfg.earliestOpen ?? ''} onChange={(e) => set('earliestOpen', e.target.value)} />
+            <input className="field" list="shutter-earliestOpen-opts" type="text" pattern="[0-9]{2}:[0-9]{2}" placeholder="HH:mm" value={cfg.earliestOpen ?? ''} onChange={(e) => set('earliestOpen', e.target.value)} />
             <datalist id="shutter-earliestOpen-opts">
               {(suggestions?.earliestOpen ?? []).map((v) => <option key={v} value={v} />)}
             </datalist>
           </label>
           <label className="block">
             <span className="field-label">Latest Close <span className="text-gray-400">HH:mm</span></span>
-            <input className="field" list="shutter-latestClose-opts" type="time" value={cfg.latestClose ?? ''} onChange={(e) => set('latestClose', e.target.value)} />
+            <input className="field" list="shutter-latestClose-opts" type="text" pattern="[0-9]{2}:[0-9]{2}" placeholder="HH:mm" value={cfg.latestClose ?? ''} onChange={(e) => set('latestClose', e.target.value)} />
             <datalist id="shutter-latestClose-opts">
               {(suggestions?.latestClose ?? []).map((v) => <option key={v} value={v} />)}
             </datalist>

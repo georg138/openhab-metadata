@@ -94,14 +94,14 @@ export function LightForm({ itemName, initial, fromLocation, suggestions, onSave
           </label>
           <label className="block">
             <span className="field-label">Earliest On <span className="text-gray-400">HH:mm</span></span>
-            <input className="field" list="light-earliestOn-opts" type="time" value={cfg.earliestOn ?? ''} onChange={(e) => set('earliestOn', e.target.value)} />
+            <input className="field" list="light-earliestOn-opts" type="text" pattern="[0-9]{2}:[0-9]{2}" placeholder="HH:mm" value={cfg.earliestOn ?? ''} onChange={(e) => set('earliestOn', e.target.value)} />
             <datalist id="light-earliestOn-opts">
               {(suggestions?.earliestOn ?? []).map((v) => <option key={v} value={v} />)}
             </datalist>
           </label>
           <label className="block">
             <span className="field-label">Latest Off <span className="text-gray-400">HH:mm</span></span>
-            <input className="field" list="light-latestOff-opts" type="time" value={cfg.latestOff ?? ''} onChange={(e) => set('latestOff', e.target.value)} />
+            <input className="field" list="light-latestOff-opts" type="text" pattern="[0-9]{2}:[0-9]{2}" placeholder="HH:mm" value={cfg.latestOff ?? ''} onChange={(e) => set('latestOff', e.target.value)} />
             <datalist id="light-latestOff-opts">
               {(suggestions?.latestOff ?? []).map((v) => <option key={v} value={v} />)}
             </datalist>
