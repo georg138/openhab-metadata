@@ -44,6 +44,13 @@ fi
 mkdir -p "${UNIT_DIR}"
 install -m 0644 "${SRC_QUADLET}" "${UNIT_DIR}/openhab-metadata.container"
 
+# Create env file with empty token if it doesn't exist yet
+ENV_FILE="${UNIT_DIR}/openhab-metadata.env"
+if [[ ! -f "${ENV_FILE}" ]]; then
+  install -m 0600 /dev/null "${ENV_FILE}"
+  echo "OPENHAB_TOKEN=" >> "${ENV_FILE}"
+fi
+
 "${SYSTEMCTL[@]}" daemon-reload
 "${SYSTEMCTL[@]}" enable --now openhab-metadata.service
 
