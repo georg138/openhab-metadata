@@ -8,7 +8,7 @@ PublishPort=5180:5180
 Environment=OPENHAB_URL=http://openhab:8080
 EnvironmentFile=openhab-metadata.env
 AutoUpdate=registry
-PullPolicy=newer
+Pull=newer
 Label=traefik.enable=true
 Label=traefik.http.routers.openhab-metadata.rule=Host(`openhab-metadata.georgsiebke.de`)
 Label=traefik.http.services.openhab-metadata.loadbalancer.server.port=5180
