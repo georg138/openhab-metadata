@@ -6,7 +6,7 @@ Image=ghcr.io/georg138/openhab-metadata:latest
 ContainerName=openhab-metadata
 PublishPort=5180:5180
 Environment=OPENHAB_URL=http://openhab:8080
-EnvironmentFile=/etc/containers/systemd/openhab-metadata.env
+EnvironmentFile=openhab-metadata.env
 AutoUpdate=registry
 PullPolicy=newer
 Label=traefik.enable=true
