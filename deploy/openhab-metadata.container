@@ -1,7 +1,5 @@
 [Unit]
 Description=openhab-metadata web UI container
-Wants=network-online.target
-After=network-online.target
 
 [Container]
 Image=ghcr.io/georg138/openhab-metadata:latest
@@ -9,6 +7,11 @@ ContainerName=openhab-metadata
 PublishPort=5180:5180
 Environment=OPENHAB_URL=http://openhab:8080
 Environment=OPENHAB_TOKEN=
+AutoUpdate=registry
+PullPolicy=newer
+Label=traefik.enable=true
+Label=traefik.http.routers.openhab-metadata.rule=Host(`openhab-metadata.georgsiebke.de`)
+Label=traefik.http.services.openhab-metadata.loadbalancer.server.port=5180
 
 [Service]
 Restart=always
