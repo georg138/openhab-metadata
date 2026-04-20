@@ -33,5 +33,6 @@ export default defineConfig({
     host: true,
     port: 5180,
     proxy: proxyConfig,
+    allowedHosts: ['openhab-metadata.georgsiebke.de'],
   },
 })
